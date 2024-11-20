@@ -1,2 +1,6 @@
 # Ohjelmisto-2-project
-Ohjelmiston 2 projekti
+
+## Teknologiat 
+TailwindCSS for styles
+Vanilla JavaScript
+Vanilla HTML
