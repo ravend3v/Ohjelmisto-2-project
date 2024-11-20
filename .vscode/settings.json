@@ -6,5 +6,7 @@
   },
   "editor.quickSuggestions": {
     "strings": true
-  }
+  },
+  "editor.formatOnSave": true,
+  "liveServer.settings.CustomBrowser": "firefox"
 }
