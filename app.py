@@ -6,8 +6,7 @@ from operations import DatabaseOperations
 from password_utils import bcrypt, PasswordUtils
 
 # Load .env.local variables
-load_dotenv("'.env'")
-print("Environment variables loaded:", os.environ)
+load_dotenv()
 
 app = Flask(__name__)
 bcrypt.init_app(app)
@@ -21,19 +20,25 @@ def sign_up():
         # Hash the password
         hashed_password = PasswordUtils.hash_password(password)
         
-        # Debugging statements
-        print(f"Username: {username}")
-        print(f"Hashed Password: {hashed_password}")
-        
         conn = DatabaseOperations.get_db_connection()
         if conn is None:
           return "An error occured while connecting to the database."
         
         cursor = conn.cursor()
-        
+
         try:
-            cursor.execute("INSERT INTO player (user_name, password, co2_consumed, money, location) VALUES (?, ?, ?, ?, ?)", 
-                          (username, hashed_password, 0, 0, ''))
+            # Check if the default location exists in the airport table
+            cursor.execute("SELECT ident FROM airport WHERE ident = %s", ('',))
+            if cursor.fetchone() is None:
+                # Insert a valid location if the default does not exist
+                cursor.execute("SELECT ident FROM airport LIMIT 1")
+                valid_location = cursor.fetchone()[0]
+            else:
+                valid_location = ''
+
+            cursor.execute(
+                "INSERT INTO player (user_name, password, co2_consumed, money, location) VALUES (%s, %s, %s, %s, %s)",
+                (username, hashed_password, 0, 0, valid_location))
             conn.commit()
         except mariadb.Error as e:
             print(f"Error: {e}")
@@ -56,10 +61,10 @@ def login():
         cursor = conn.cursor()
 
         try:
-            cursor.execute("SELECT password FROM player WHERE user_name = ?", (username,))
+            cursor.execute("SELECT password FROM player WHERE user_name = %s", (username,))
             result = cursor.fetchone()
             if result and PasswordUtils.check_password(result[0], password):
-                return "Login successful"
+                return render_template('landing.html')
             else:
                 return "Invalid username or password"
         except mariadb.Error as e:

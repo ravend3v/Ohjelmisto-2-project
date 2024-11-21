@@ -12,8 +12,7 @@ class DatabaseOperations:
         for key in list(os.environ.keys()):
             if key.startswith("DB_"):
                 del os.environ[key]
-        load_dotenv('.env')
-        print("Environment variables loaded:", os.environ)
+        load_dotenv()
 
     @staticmethod
     def get_db_connection():
@@ -21,19 +20,13 @@ class DatabaseOperations:
             # Load .env variables
             load_dotenv()
 
-            # Debugging statements to verify environment variables
-            print(f"DB_USER: {os.environ['DB_USER']}")
-            print(f"DB_PASSWORD: {os.environ['DB_PASSWORD']}")
-            print(f"DB_HOST: {os.environ['DB_HOST']}")
-            print(f"DB_PORT: {os.environ['DB_PORT']}")
-            print(f"DB_NAME: {os.environ['DB_NAME']}")
-
             conn = mysql.connector.connect(
                 host=os.environ['DB_HOST'],
                 user=os.environ['DB_USER'],
                 passwd=os.environ['DB_PASSWORD'],
                 database=os.environ['DB_NAME'],
                 port=os.environ['DB_PORT'],
+                collation=os.environ['DB_COLLATION']
             )
 
             if conn.is_connected():
