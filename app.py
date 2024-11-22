@@ -22,7 +22,7 @@ def sign_up():
         
         conn = DatabaseOperations.get_db_connection()
         if conn is None:
-          return "An error occured while connecting to the database."
+            return "An error occured while connecting to the database."
         
         cursor = conn.cursor()
 

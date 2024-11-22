@@ -1,6 +1,9 @@
 import mysql.connector
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
+
+#find the .env file and see if it exists
+env_file = find_dotenv(f'.env')
 
 class DatabaseOperations:
     def __init__(self):
@@ -12,13 +15,13 @@ class DatabaseOperations:
         for key in list(os.environ.keys()):
             if key.startswith("DB_"):
                 del os.environ[key]
-        load_dotenv()
+        load_dotenv(env_file)
 
     @staticmethod
     def get_db_connection():
         try:
             # Load .env variables
-            load_dotenv()
+            load_dotenv(env_file)
 
             conn = mysql.connector.connect(
                 host=os.environ['DB_HOST'],
