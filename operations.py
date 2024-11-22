@@ -18,19 +18,23 @@ class DatabaseOperations:
         load_dotenv(env_file)
 
     @staticmethod
+    def create_connection():
+        return mysql.connector.connect(
+            host=os.environ['DB_HOST'],
+            user=os.environ['DB_USER'],
+            passwd=os.environ['DB_PASSWORD'],
+            database=os.environ['DB_NAME'],
+            port=os.environ['DB_PORT'],
+            collation=os.environ['DB_COLLATION']
+        )
+
+    @staticmethod
     def get_db_connection():
         try:
             # Load .env variables
             load_dotenv(env_file)
 
-            conn = mysql.connector.connect(
-                host=os.environ['DB_HOST'],
-                user=os.environ['DB_USER'],
-                passwd=os.environ['DB_PASSWORD'],
-                database=os.environ['DB_NAME'],
-                port=os.environ['DB_PORT'],
-                collation=os.environ['DB_COLLATION']
-            )
+            conn = DatabaseOperations.create_connection()
 
             if conn.is_connected():
                 print("Database connected")
