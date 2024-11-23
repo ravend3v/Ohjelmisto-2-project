@@ -4,3 +4,4 @@ python-dotenv==1.0.1
 mysql-connector-python==9.1.0
 bcrypt==4.1.1
 mariadb==1.1.11
+PyJWT==2.10.0
