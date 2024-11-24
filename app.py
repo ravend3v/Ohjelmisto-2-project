@@ -14,62 +14,43 @@ load_dotenv()
 app = Flask(__name__)
 bcrypt.init_app(app)
 
+@app.after_request
+def add_header(r):
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+
+    return r
+
 @app.route('/', methods=['GET'])
 def landing_page():
-    return render_template('landing.html'), 200
+    access_token_data = get_access_token(request)
 
-@app.route('/getAccessToken', methods=['GET'])
-def get_access_token():
-    session_token = request.cookies.get('session_token')
-    response_body = { 'redirect': True, 'access_token': '', 'user': '' }
+    if not access_token_data['success']:
+        response = app.make_response(redirect(url_for('login')))
+        response.delete_cookie('session_token')
+        return response, 301
 
-    conn = DatabaseOperations.get_db_connection()
-    cursor = conn.cursor()
-
-    if session_token:
-        try:
-            decoded_session_token = jwt.decode(session_token, JWT_RSA_PUBLIC_KEY, algorithms=SESSION_TOKEN_ALGO)
-
-            user = decoded_session_token['user_name']
-
-            cursor.execute("SELECT Id FROM player WHERE user_name = %s", (user,))
-            if cursor.fetchone() is None:
-                return app.make_response(jsonify(response_body))
-            
-            access_token_payload = { 'user_name': user, 'ttl': str(datetime.now() + timedelta(hours=1)), 'salt': generate_secure_radnom_string(16) }
-            access_token = jwt.encode(access_token_payload, session_token, algorithm=ACCESS_TOKEN_ALGO)
-
-            response_body['redirect'] = False
-            response_body['access_token'] = access_token
-            response_body['user'] = user
-
-            return app.make_response(jsonify(response_body)), 200
-        
-        except:
-            return app.make_response(jsonify(response_body)), 500
-        
-        finally:
-            conn.close()
-            cursor.close()
-
-    return app.make_response(jsonify(response_body)), 401
+    return render_template('landing.html', data=access_token_data), 200
 
 
 @app.route('/sign_up', methods=['GET', 'POST'])
 def sign_up():
+    error_message = { 'error_message': '', 'display': 'hidden' }
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
-        response_body = { 'access_token': '', 'success': False, 'message': '' }
-        
         # Hash the password
         hashed_password = PasswordUtils.hash_password(password)
         
         conn = DatabaseOperations.get_db_connection()
         if conn is None:
-            response_body['message'] = 'An error occured while connecting to the database.'
-            return app.make_response(response_body), 500
+            error_message['error_message'] = 'An error occured while connecting to the database.'
+            error_message['display'] = 'flex'
+            return render_template('sign_up.html', data=error_message)
         
         cursor = conn.cursor()
 
@@ -88,13 +69,7 @@ def sign_up():
                 session_token_payload = { 'user_name': username, 'password': hashed_password }
                 session_token = jwt.encode(session_token_payload, JWT_RSA_PRIVATE_KEY, algorithm=SESSION_TOKEN_ALGO)
 
-                access_token_payload = { 'user_name': username, 'ttl': str(datetime.now() + timedelta(hours=1)), 'salt': generate_secure_radnom_string(16) }
-                access_token = jwt.encode(access_token_payload, session_token, algorithm=ACCESS_TOKEN_ALGO)
-
-                response_body['access_token'] = access_token
-                response_body['success'] = True
-
-                response = app.make_response(jsonify(response_body))
+                response = app.make_response(redirect('/'))
                 response.set_cookie('session_token', session_token,
                                     expires=datetime.now() + timedelta(days=7),
                                     httponly=True,
@@ -103,23 +78,37 @@ def sign_up():
                 cursor.execute(
                     "INSERT INTO player (user_name, password, co2_consumed, money, location) VALUES (%s, %s, %s, %s, %s)",
                     (username, hashed_password, 0, 0, valid_location))
+                
                 conn.commit()
 
-                return response, 200
+                return response, 301
             else:
-                response_body['message'] = f'User {username} already exists'
-                return app.make_response(response_body), 400
+                error_message['error_message'] = f'User {username} already exists'
+                error_message['display'] = 'flex'
+                return render_template('sign-up.html', data=error_message)
         except Exception as e:
-            response_body['message'] = e
-            return app.make_response(response_body), 500
+            error_message['error_message'] = e
+            error_message['display'] = 'flex'
+            return render_template('sign-up.html', data=error_message)
         finally:
             cursor.close()
             conn.close()
 
-    return render_template('sign-up.html'), 200
+    session_token_cookie = request.cookies.get('session_token')
+    decoded_session_token = valid_session_token(session_token_cookie)
+
+    if decoded_session_token['valid']:
+        return redirect('/'), 301
+    
+    response = app.make_response(render_template('sign-up.html', data=error_message))
+    response.delete_cookie('session_token')
+    
+    return response, 200
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error_message = { 'error_message': '', 'display': 'hidden' }
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -131,17 +120,38 @@ def login():
             cursor.execute("SELECT password FROM player WHERE user_name = %s", (username,))
             result = cursor.fetchone()
             if result and PasswordUtils.check_password(result[0], password):
-                return "logged in!!"
+                session_token_payload = { 'user_name': username, 'password': PasswordUtils.hash_password(password) }
+                session_token = jwt.encode(session_token_payload, JWT_RSA_PRIVATE_KEY, algorithm=SESSION_TOKEN_ALGO)
+
+                response = app.make_response(redirect('/'))
+                response.set_cookie('session_token', session_token,
+                                    expires=datetime.now() + timedelta(days=7),
+                                    httponly=True,
+                                    samesite='Strict')
+
+                return response, 301
             else:
-                return "Invalid username or password"
-        except mariadb.Error as e:
-            print(f"Error: {e}")
-            return "An error occurred while logging in."
+                error_message['error_message'] = 'Invalid username or password'
+                error_message['display'] = 'flex'
+                return render_template('login.html', data=error_message)
+        except Exception as e:
+            error_message['error_message'] = e
+            error_message['display'] = 'flex'
+            return render_template('login.html', data=error_message)
         finally:
             cursor.close()
             conn.close()
 
-    return render_template('login.html')
+    session_token_cookie = request.cookies.get('session_token')
+    decoded_session_token = valid_session_token(session_token_cookie)
+
+    if decoded_session_token['valid']:
+        return redirect('/'), 301
+    
+    response = app.make_response(render_template('login.html', data=error_message))
+    response.delete_cookie('session_token')
+
+    return response, 200
 
 @app.route('/logout', methods=['GET'])
 def logout():
