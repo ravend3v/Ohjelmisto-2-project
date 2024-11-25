@@ -155,9 +155,14 @@ def login():
 
 @app.route('/load_game', methods=['GET'])
 def load_game():
-    error_message = { 'error_message': '', 'display': 'hidden' }
+    access_token_data = get_access_token(request)
     
+    if not access_token_data['success']:
+        response = app.make_response(redirect(url_for('login')))
+        response.delete_cookie('session_token')
+        return response, 301
     
+    return render_template('load_game.html', data=access_token_data), 200
 
 @app.route('/logout', methods=['GET'])
 def logout():
