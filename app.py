@@ -153,6 +153,12 @@ def login():
 
     return response, 200
 
+@app.route('/load_game', methods=['GET'])
+def load_game():
+    error_message = { 'error_message': '', 'display': 'hidden' }
+    
+    
+
 @app.route('/logout', methods=['GET'])
 def logout():
     response = app.make_response(redirect(url_for('login')))
