@@ -35,6 +35,11 @@ def landing_page():
     return render_template('landing.html', data=access_token_data), 200
 
 
+@app.route('/game', methods=['GET'])
+def game():
+    return render_template('game.html')
+
+
 @app.route('/sign_up', methods=['GET', 'POST'])
 def sign_up():
     error_message = { 'error_message': '', 'display': 'hidden' }
