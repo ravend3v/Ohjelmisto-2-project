@@ -37,7 +37,25 @@ def landing_page():
 
 @app.route('/game', methods=['GET'])
 def game():
-    return render_template('game.html')
+    conn = DatabaseOperations.get_db_connection()
+    cursor = conn.cursor()
+
+    # Test data. In real game load airports based on current user
+    cursor.execute("SELECT ident, name, latitude_deg, longitude_deg FROM airport WHERE continent='EU' LIMIT 25")
+    results = cursor.fetchall()
+
+    results_arr = []
+    for result in results:
+        results_arr.append({
+            'ident': result[0],
+            'name': result[1],
+            'latitude_deg': result[2],
+            'longitude_deg': result[3]
+        })
+
+    page_data = { 'airports': results_arr, 'current_airport': results_arr[0]['name'] }
+
+    return render_template('game.html', data=page_data)
 
 
 @app.route('/sign_up', methods=['GET', 'POST'])
