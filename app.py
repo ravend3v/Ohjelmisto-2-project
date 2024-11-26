@@ -6,6 +6,9 @@ from flask import Flask, request, render_template, redirect, url_for, jsonify
 from operations import DatabaseOperations
 from password_utils import bcrypt, PasswordUtils
 
+# Import queries
+from .queries import *
+
 from lib.crypto import *
 
 # Load .env.local variables
@@ -162,7 +165,23 @@ def load_game():
         response.delete_cookie('session_token')
         return response, 301
     
+    username = access_token_data['user_name']
+    games = get_player_games(username)
+    
     return render_template('load_game.html', data=access_token_data), 200
+
+def get_player_games(username):
+    conn = DatabaseOperations.get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute(GET_GAMES, ())
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route('/logout', methods=['GET'])
 def logout():

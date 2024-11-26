@@ -21,6 +21,17 @@
           </li>
         </ul>
       </nav>
+      <div>
+        {% if games %}
+            <ul>
+                {% for game in games %}
+                    <li>Game ID: {{ game[0] }}, Players: {{ game[1] }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No games found.</p>
+        {% endif %}
+    </div>
     </main>
   </body>
 </html>
