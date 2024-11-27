@@ -40,6 +40,27 @@ def valid_session_token(token: str):
         conn.close()
         cursor.close()
 
+def valid_access_token(access_token: str, session_token: str):
+    conn = DatabaseOperations.get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        decoded_session_token = valid_session_token(session_token)
+        if not decoded_session_token['valid']:
+            return { 'valid': False, 'message': 'Invalid session token' }
+        
+        decoded_access_token = jwt.decode(access_token, session_token, algorithms=ACCESS_TOKEN_ALGO)
+        if decoded_access_token['user_name'] == decoded_session_token['user']:
+            return { 'valid': True, 'message': 'Valid tokens' }
+        return { 'valid': False, 'message': 'Invalid access token' }
+    
+    except Exception as e:
+        return { 'valid': False, 'message': f'{e}' }
+    
+    finally:
+        conn.close()
+        cursor.close()
+
 
 def get_access_token(req: Request):
     session_token = req.cookies.get('session_token')
