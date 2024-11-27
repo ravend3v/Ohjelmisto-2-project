@@ -8,11 +8,15 @@ from password_utils import bcrypt, PasswordUtils
 
 from lib.crypto import *
 
+from api import api_bp
+
 # Load .env.local variables
 load_dotenv()
 
 app = Flask(__name__)
 bcrypt.init_app(app)
+
+app.register_blueprint(api_bp, url_prefix='/api')
 
 @app.after_request
 def add_header(r):
@@ -33,6 +37,29 @@ def landing_page():
         return response, 301
 
     return render_template('landing.html', data=access_token_data), 200
+
+
+@app.route('/game', methods=['GET'])
+def game():
+    conn = DatabaseOperations.get_db_connection()
+    cursor = conn.cursor()
+
+    # Test data. In real game load airports based on current user
+    cursor.execute("SELECT ident, name, latitude_deg, longitude_deg FROM airport WHERE continent='EU' LIMIT 25")
+    results = cursor.fetchall()
+
+    results_arr = []
+    for result in results:
+        results_arr.append({
+            'ident': result[0],
+            'name': result[1],
+            'latitude_deg': result[2],
+            'longitude_deg': result[3]
+        })
+
+    page_data = { 'airports': results_arr, 'current_airport': results_arr[0]['name'] }
+
+    return render_template('game.html', data=page_data)
 
 
 @app.route('/sign_up', methods=['GET', 'POST'])
