@@ -8,11 +8,15 @@ from password_utils import bcrypt, PasswordUtils
 
 from lib.crypto import *
 
+from api import api_bp
+
 # Load .env.local variables
 load_dotenv()
 
 app = Flask(__name__)
 bcrypt.init_app(app)
+
+app.register_blueprint(api_bp, url_prefix='/api')
 
 @app.after_request
 def add_header(r):
