@@ -8,11 +8,6 @@
     <title>Document</title>
   </head>
   <body class="bg-gray-100">
-    <script type="text/javascript">
-      const access_token = {{ data | tojson }}.access_token
-    </script>
-
-    <!-- <h1>{{ data.test }}</h1> -->
     <main id="main" class="flex flex-col gap-4 mt-10 justify-center items-center">
       <h1 class="text-3xl">Flight game</h1>
       <div class="bg-white p-2 shadow-md rounded-md">
@@ -43,8 +38,27 @@
           >
         </li>
       </menu>
+
+      <button id="kys">test</button>
+      <a href="{{ url_for('game') }}">view game</a>
     </main>
 
+    <script type="text/javascript">
+      const access_token = {{ data | tojson }}.access_token
 
+      /// TEST TEST TEST
+      document.getElementById('kys').onclick = async () => {
+        const test = await fetch('/api/test', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${access_token}`
+          }
+        })
+
+        const testJson = await test.json()
+        console.log(testJson)
+      }
+      /// TEST TEST TEST
+    </script>
   </body>
 </html>
