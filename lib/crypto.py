@@ -32,10 +32,10 @@ def valid_session_token(token: str):
 
         cursor.execute("SELECT Id FROM player WHERE user_name = %s", (user,))
         if cursor.fetchone() is None:
-            return { 'valid': False, 'user': '' }
-        return { 'valid': True, 'user': user }
+            return { 'valid': False, 'user': '', 'user_Id': '' }
+        return { 'valid': True, 'user': user, 'user_Id': decoded_session_token['user_Id'] }
     except:
-        return { 'valid': False, 'user': '' }
+        return { 'valid': False, 'user': '', 'user_Id': '' }
     finally:
         conn.close()
         cursor.close()
@@ -43,36 +43,44 @@ def valid_session_token(token: str):
 
 def get_access_token(req: Request):
     session_token = req.cookies.get('session_token')
-    response_body = { 'success': False, 'access_token': '', 'user': '' }
+    response_body = { 'success': False, 'access_token': '', 'user': '', 'user_Id': '' }
 
     conn = DatabaseOperations.get_db_connection()
     cursor = conn.cursor()
 
     if session_token:
+        print("this happens")
         try:
             decoded_session_token = valid_session_token(session_token)
             if not decoded_session_token['valid']:
+                print(decoded_session_token)
                 return response_body
+            
+            print(decoded_session_token)
             
             access_token_payload = { 
                 'user_name': decoded_session_token['user'], 
+                'user_Id': decoded_session_token['user_Id'],
                 'ttl': str(datetime.now() + timedelta(hours=1)), 
                 'salt': generate_secure_radnom_string(16)
                 }
             access_token = jwt.encode(access_token_payload, session_token, algorithm=ACCESS_TOKEN_ALGO)
+            print(access_token)
 
             response_body['success'] = True
             response_body['access_token'] = access_token
             response_body['user'] = decoded_session_token['user']
+            response_body['user_Id'] = decoded_session_token['user_Id']
 
             return response_body
         
-        except:
+        except Exception as e:
+            print(e)
             return response_body
         
         finally:
             conn.close()
             cursor.close()
 
-    return response_body
+    # return response_body
 

@@ -4,6 +4,6 @@ GET_GAMES = """
     FROM player_game pg
     JOIN player p ON pg.player_id = p.Id
     JOIN game g ON pg.game_id = g.Id
-    WHERE g.game_over = 0
+    WHERE g.game_over = 0 AND p.Id = %s
     GROUP BY pg.game_id;
 """

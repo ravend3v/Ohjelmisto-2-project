@@ -11,27 +11,27 @@
   </head>
   <body>
     <script type="text/javascript">
-      const access_token = {{ data | tojson }}.access_token
+      const access_token = {{ data | tojson }}.access_token_data.access_token
     </script>
     <main class="">
       <nav class="flex flex row bg-[#2F2F2F] shadow-lg p-2">
         <ul class="">
           <li class="hover:bg-indigo-700 hover:text-white cursor-pointer hover:pointer p-2 rounded-md">
-            <a href="{{ url_for('landing') }}"><p class="">Back</p></a>
+            <a href="/"><p class="">Back</p></a>
           </li>
         </ul>
       </nav>
       <div>
-        {% if games %}
+        {% if data.games %}
             <ul>
-                {% for game in games %}
+                {% for game in data.games %}
                     <li>Game ID: {{ game[0] }}, Players: {{ game[1] }}</li>
                 {% endfor %}
             </ul>
         {% else %}
             <p>No games found.</p>
         {% endif %}
-    </div>
+      </div>
     </main>
   </body>
 </html>
