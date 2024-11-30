@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <title>start_location</title>
+</head>
+<body class="bg-gray-100">
+
+
+<main id="main" class="flex flex-col gap-4 mt-10 justify-center items-center">
+    <h1 class="text-3xl">Flight game</h1>
+    <div class="bg-white p-2 shadow-md rounded-md">
+        <p id="user">Logged in as {{ data.user }}</p>
+    </div>
+    <form action="{{ url_for('start_location') }}" method="POST" class="space-y-4 w-full max-w-md">
+        <menu class="flex flex-col gap-6 bg-white shadow-lg rounded-lg w-full p-4">
+
+            <li
+                    class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:bg-indigo-700 hover:cursor-pointer hover:text-white"
+            >
+                <button
+                        type="submit"
+                        name="location"
+                        value="Helsinki"
+                        class="w-full h-full text-lg font-medium bg-transparent focus:outline-none"
+                >
+                    Helsinki-Vantaa
+                </button>
+            </li>
+
+
+            <li
+                    class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:bg-indigo-700 hover:cursor-pointer hover:text-white"
+            >
+                <button
+                        type="submit"
+                        name="location"
+                        value="Paris"
+                        class="w-full h-full text-lg font-medium bg-transparent focus:outline-none"
+                >
+                    Paris-Charles de Gaulle
+                </button>
+            </li>
+
+
+            <li
+                    class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:bg-indigo-700 hover:cursor-pointer hover:text-white"
+            >
+                <button
+                        type="submit"
+                        name="location"
+                        value="Berlin"
+                        class="w-full h-full text-lg font-medium bg-transparent focus:outline-none"
+                >
+                    Berlin-Tegel
+                </button>
+            </li>
+        </menu>
+    </form>
+</main>
+</body>
+</html>

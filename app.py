@@ -160,5 +160,25 @@ def logout():
 
     return response, 301
 
+@app.route('/start_location', methods=['GET', 'POST'])
+def start_location():
+
+    cities = [
+        {"name": "Helsinki-Vantaa", "icao": "EFHK"},
+        {"name": "Paris-Charles de Gaulle", "icao": "LFPO"},
+        {"name": "Berlin-Tegel", "icao": "EDDB"}
+    ]
+
+    if request.method == 'POST':
+        selected_location = request.form.get('location')
+
+        if selected_location and any(city["name"] == selected_location for city in cities):
+            return redirect(url_for('main_game', location = selected_location), 301)
+        else:
+            error_message = "Please select a starting location"
+            return render_template('start_location.html', error_message=error_message), 400
+
+    return render_template('start_location.html'), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
