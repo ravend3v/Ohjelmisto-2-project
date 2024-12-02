@@ -50,16 +50,16 @@
     </div>
     
     <div id="player-data" class="bg-white z-[1000] absolute bottom-4 px-4 py-2 rounded-md flex flex-col items-center gap-4">
-        <h1 class="font-semibold text-xl">player name, {{ data.current_airport }}</h1>
+        <h1 class="font-semibold text-xl">{{ data.access_token_data.user }}, {{ data.current_airport }}</h1>
     </div>
 
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='javascript/flight_game_map.js') }}"></script>
     <script type="text/javascript">
-        const airports = {{ data | tojson }}.airports
+        const pageData = {{ data | tojson }}
 
-        renderMap(airports)
+        renderMap(pageData.airports)
     </script>
 </body>
 </html>

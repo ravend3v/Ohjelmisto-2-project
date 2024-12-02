@@ -1,6 +1,6 @@
 import os, base64, jwt
 
-from flask import Request
+from flask import Request, Response, Flask, redirect
 from operations import DatabaseOperations
 from datetime import datetime, timedelta
 
@@ -60,6 +60,18 @@ def valid_access_token(access_token: str, session_token: str):
     finally:
         conn.close()
         cursor.close()
+
+
+def create_session_token(payload, app: Flask) -> Response:
+    session_token = jwt.encode(payload, JWT_RSA_PRIVATE_KEY, algorithm=SESSION_TOKEN_ALGO)
+
+    response = app.make_response(redirect('/'))
+    response.set_cookie('session_token', session_token,
+                        expires=datetime.now() + timedelta(days=7),
+                        httponly=True,
+                        samesite='Strict')
+    
+    return response
 
 
 def get_access_token(req: Request):

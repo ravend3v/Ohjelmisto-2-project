@@ -7,3 +7,11 @@ GET_GAMES = """
     WHERE g.game_over = 0 AND p.Id = %s
     GROUP BY pg.game_id;
 """
+
+GET_CURRENT_PLAYER_LOCATION_DATA = """
+    SELECT airport.ident, airport.name, airport.latitude_deg, airport.longitude_deg, player.money
+    FROM airport
+    JOIN player
+    ON airport.ident = player.location
+    WHERE player.Id = %s
+"""

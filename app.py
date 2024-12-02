@@ -2,7 +2,7 @@ import os, base64, mariadb, jwt
 
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-from flask import Flask, request, render_template, redirect, url_for, jsonify
+from flask import Flask, request, render_template, redirect, url_for, g
 from operations import DatabaseOperations
 from password_utils import bcrypt, PasswordUtils
 
@@ -21,6 +21,36 @@ bcrypt.init_app(app)
 
 app.register_blueprint(api_bp, url_prefix='/api')
 
+def get_access_token_middleware(func):
+    def wrapper(*args, **kwargs):
+        access_token_data = get_access_token(request)
+
+        if not access_token_data['success']:
+            response = app.make_response(redirect(url_for('login')))
+            response.delete_cookie('session_token')
+            return response, 301
+        
+        g.access_token_data = access_token_data
+        
+        return func(*args, **kwargs)
+    
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+def valid_session_token_middleware(func):
+    def wrapper(*args, **kwargs):
+        session_token_cookie = request.cookies.get('session_token')
+        decoded_session_token = valid_session_token(session_token_cookie)
+
+        if decoded_session_token['valid']:
+            return redirect('/'), 301
+        
+        return func(*args, **kwargs)
+    
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+
 @app.after_request
 def add_header(r):
     r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -31,42 +61,61 @@ def add_header(r):
     return r
 
 @app.route('/', methods=['GET'])
+@get_access_token_middleware
 def landing_page():
-    access_token_data = get_access_token(request)
-    print(access_token_data)
-
-    if not access_token_data['success']:
-        response = app.make_response(redirect(url_for('login')))
-        response.delete_cookie('session_token')
-        return response, 301
+    access_token_data = g.get('access_token_data')
 
     return render_template('landing.html', data=access_token_data), 200
 
 
 @app.route('/game', methods=['GET'])
+@get_access_token_middleware
 def game():
     conn = DatabaseOperations.get_db_connection()
     cursor = conn.cursor()
 
+    access_token_data = g.get('access_token_data')
+
+    cursor.execute(GET_CURRENT_PLAYER_LOCATION_DATA, (access_token_data['user_Id'], ))
+    current_airport = cursor.fetchone()
+    current_airport_json = {
+        'ident': current_airport[0],
+        'name': current_airport[1],
+        'latitude_deg': current_airport[2],
+        'longitude_deg': current_airport[3]
+    }
+
+    cursor.execute('SELECT ident, name, latitude_deg, longitude_deg FROM airport')
+    all_airports = cursor.fetchall()
+
+        
+
     # Test data. In real game load airports based on current user
-    cursor.execute("SELECT ident, name, latitude_deg, longitude_deg FROM airport WHERE continent='EU' LIMIT 25")
-    results = cursor.fetchall()
+    # cursor.execute("SELECT ident, name, latitude_deg, longitude_deg FROM airport WHERE continent='EU' LIMIT 25")
+    # results = cursor.fetchall()
 
-    results_arr = []
-    for result in results:
-        results_arr.append({
-            'ident': result[0],
-            'name': result[1],
-            'latitude_deg': result[2],
-            'longitude_deg': result[3]
-        })
+    # results_arr = []
+    # for result in results:
+    #     results_arr.append({
+    #         'ident': result[0],
+    #         'name': result[1],
+    #         'latitude_deg': result[2],
+    #         'longitude_deg': result[3]
+    #     })
 
-    page_data = { 'airports': results_arr, 'current_airport': results_arr[0]['name'] }
 
-    return render_template('game.html', data=page_data)
+    page_data = { 
+        'airports': results_arr,
+        'current_airport': current_airport_json,
+        'access_token_data': access_token_data
+        }
+
+    # return render_template('game.html', data=page_data)
+    return 'game'
 
 
 @app.route('/sign_up', methods=['GET', 'POST'])
+@valid_session_token_middleware
 def sign_up():
     error_message = { 'error_message': '', 'display': 'hidden' }
 
@@ -104,13 +153,7 @@ def sign_up():
                 conn.commit()
                 
                 session_token_payload = { 'user_name': username, 'password': hashed_password, 'user_Id': cursor.lastrowid }
-                session_token = jwt.encode(session_token_payload, JWT_RSA_PRIVATE_KEY, algorithm=SESSION_TOKEN_ALGO)
-
-                response = app.make_response(redirect('/'))
-                response.set_cookie('session_token', session_token,
-                                    expires=datetime.now() + timedelta(days=7),
-                                    httponly=True,
-                                    samesite='Strict')
+                response = create_session_token(session_token_payload, app)
                 
                 return response, 301
             else:
@@ -124,12 +167,6 @@ def sign_up():
         finally:
             cursor.close()
             conn.close()
-
-    session_token_cookie = request.cookies.get('session_token')
-    decoded_session_token = valid_session_token(session_token_cookie)
-
-    if decoded_session_token['valid']:
-        return redirect('/'), 301
     
     response = app.make_response(render_template('sign-up.html', data=error_message))
     response.delete_cookie('session_token')
@@ -137,6 +174,7 @@ def sign_up():
     return response, 200
 
 @app.route('/login', methods=['GET', 'POST'])
+@valid_session_token_middleware
 def login():
     error_message = { 'error_message': '', 'display': 'hidden' }
 
@@ -152,14 +190,7 @@ def login():
             result = cursor.fetchone()
             if result and PasswordUtils.check_password(result[1], password):
                 session_token_payload = { 'user_name': username, 'password': PasswordUtils.hash_password(password), 'user_Id': result[0] }
-                session_token = jwt.encode(session_token_payload, JWT_RSA_PRIVATE_KEY, algorithm=SESSION_TOKEN_ALGO)
-                print(f"Session token generated: {session_token}")
-
-                response = app.make_response(redirect('/'))
-                response.set_cookie('session_token', session_token,
-                                    expires=datetime.now() + timedelta(days=7),
-                                    httponly=True,
-                                    samesite='Strict')
+                response = create_session_token(session_token_payload, app)
 
                 return response, 301
             else:
@@ -173,12 +204,6 @@ def login():
         finally:
             cursor.close()
             conn.close()
-
-    session_token_cookie = request.cookies.get('session_token')
-    decoded_session_token = valid_session_token(session_token_cookie)
-
-    if decoded_session_token['valid']:
-        return redirect('/'), 301
     
     response = app.make_response(render_template('login.html', data=error_message))
     response.delete_cookie('session_token')
@@ -186,18 +211,12 @@ def login():
     return response, 200
 
 @app.route('/load_game', methods=['GET'])
+@get_access_token_middleware
 def load_game():
-    access_token_data = get_access_token(request)
-
-    if not access_token_data['success']:
-        response = app.make_response(redirect(url_for('login')))
-        response.delete_cookie('session_token')
-        return response, 301
-
+    access_token_data = g.get('access_token_data')
     games = get_player_games(access_token_data['user_Id'])
 
     page_data = {'access_token_data': access_token_data, 'games': games}
-    print(games)
     
     return render_template('load_game.html',  data=page_data), 200
 
