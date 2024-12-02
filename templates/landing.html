@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
     <script src="https://cdn.tailwindcss.com"></script>
 
     <title>Document</title>
@@ -19,7 +19,7 @@
         <li
           class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md text-center hover:bg-indigo-700 hover:cursor-pointer hover:text-white"
         >
-          <a href="" class="flex justify-center items-center w-full h-full"
+          <a href="{{ url_for ('load_game') }}" class="flex justify-center items-center w-full h-full"
             ><p>Load game</p></a
           >
         </li>
