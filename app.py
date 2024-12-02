@@ -6,13 +6,20 @@ from flask import Flask, request, render_template, redirect, url_for, jsonify
 from operations import DatabaseOperations
 from password_utils import bcrypt, PasswordUtils
 
+# Import queries
+from queries import * 
+
 from lib.crypto import *
+
+from api import api_bp
 
 # Load .env.local variables
 load_dotenv()
 
 app = Flask(__name__)
 bcrypt.init_app(app)
+
+app.register_blueprint(api_bp, url_prefix='/api')
 
 @app.after_request
 def add_header(r):
@@ -26,6 +33,7 @@ def add_header(r):
 @app.route('/', methods=['GET'])
 def landing_page():
     access_token_data = get_access_token(request)
+    print(access_token_data)
 
     if not access_token_data['success']:
         response = app.make_response(redirect(url_for('login')))
@@ -33,6 +41,29 @@ def landing_page():
         return response, 301
 
     return render_template('landing.html', data=access_token_data), 200
+
+
+@app.route('/game', methods=['GET'])
+def game():
+    conn = DatabaseOperations.get_db_connection()
+    cursor = conn.cursor()
+
+    # Test data. In real game load airports based on current user
+    cursor.execute("SELECT ident, name, latitude_deg, longitude_deg FROM airport WHERE continent='EU' LIMIT 25")
+    results = cursor.fetchall()
+
+    results_arr = []
+    for result in results:
+        results_arr.append({
+            'ident': result[0],
+            'name': result[1],
+            'latitude_deg': result[2],
+            'longitude_deg': result[3]
+        })
+
+    page_data = { 'airports': results_arr, 'current_airport': results_arr[0]['name'] }
+
+    return render_template('game.html', data=page_data)
 
 
 @app.route('/sign_up', methods=['GET', 'POST'])
@@ -66,7 +97,13 @@ def sign_up():
 
             cursor.execute("SELECT Id FROM player WHERE user_name = %s", (username,))
             if cursor.fetchone() is None:
-                session_token_payload = { 'user_name': username, 'password': hashed_password }
+                cursor.execute(
+                    "INSERT INTO player (user_name, password, co2_consumed, money, location) VALUES (%s, %s, %s, %s, %s)",
+                    (username, hashed_password, 0, 0, valid_location))
+                
+                conn.commit()
+                
+                session_token_payload = { 'user_name': username, 'password': hashed_password, 'user_Id': cursor.lastrowid }
                 session_token = jwt.encode(session_token_payload, JWT_RSA_PRIVATE_KEY, algorithm=SESSION_TOKEN_ALGO)
 
                 response = app.make_response(redirect('/'))
@@ -75,12 +112,6 @@ def sign_up():
                                     httponly=True,
                                     samesite='Strict')
                 
-                cursor.execute(
-                    "INSERT INTO player (user_name, password, co2_consumed, money, location) VALUES (%s, %s, %s, %s, %s)",
-                    (username, hashed_password, 0, 0, valid_location))
-                
-                conn.commit()
-
                 return response, 301
             else:
                 error_message['error_message'] = f'User {username} already exists'
@@ -117,11 +148,12 @@ def login():
         cursor = conn.cursor()
 
         try:
-            cursor.execute("SELECT password FROM player WHERE user_name = %s", (username,))
+            cursor.execute("SELECT Id, password FROM player WHERE user_name = %s", (username,))
             result = cursor.fetchone()
-            if result and PasswordUtils.check_password(result[0], password):
-                session_token_payload = { 'user_name': username, 'password': PasswordUtils.hash_password(password) }
+            if result and PasswordUtils.check_password(result[1], password):
+                session_token_payload = { 'user_name': username, 'password': PasswordUtils.hash_password(password), 'user_Id': result[0] }
                 session_token = jwt.encode(session_token_payload, JWT_RSA_PRIVATE_KEY, algorithm=SESSION_TOKEN_ALGO)
+                print(f"Session token generated: {session_token}")
 
                 response = app.make_response(redirect('/'))
                 response.set_cookie('session_token', session_token,
@@ -152,6 +184,36 @@ def login():
     response.delete_cookie('session_token')
 
     return response, 200
+
+@app.route('/load_game', methods=['GET'])
+def load_game():
+    access_token_data = get_access_token(request)
+
+    if not access_token_data['success']:
+        response = app.make_response(redirect(url_for('login')))
+        response.delete_cookie('session_token')
+        return response, 301
+
+    games = get_player_games(access_token_data['user_Id'])
+
+    page_data = {'access_token_data': access_token_data, 'games': games}
+    print(games)
+    
+    return render_template('load_game.html',  data=page_data), 200
+
+    
+def get_player_games(Id):
+    conn = DatabaseOperations.get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute(GET_GAMES, (Id, ))
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route('/logout', methods=['GET'])
 def logout():
