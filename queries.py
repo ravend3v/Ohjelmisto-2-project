@@ -7,3 +7,9 @@ GET_GAMES = """
     WHERE g.game_over = 0 AND p.Id = %s
     GROUP BY pg.game_id;
 """
+
+UPDATE_PLAYER_LOCATION = """
+    UPDATE player
+    SET location = %s
+    WHERE Id = %s;
+"""
