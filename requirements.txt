@@ -6,3 +6,4 @@ bcrypt==4.1.1
 mariadb==1.1.11
 PyJWT==2.10.0
 cryptography==43.0.3
+geopy==2.4.1
