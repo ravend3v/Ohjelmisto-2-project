@@ -20,3 +20,9 @@ def verify_access_token():
 @api_bp.route('/test', methods=['GET'])
 def test_api():
     return jsonify({ 'error': False, 'message': 'it works' })
+
+@api_bp.route('/fly_to/<ident>', methods=['POST'])
+def fly_to(ident):
+    request_body_data = request.json
+
+    return jsonify(request_body_data), 200

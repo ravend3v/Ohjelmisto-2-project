@@ -1,8 +1,5 @@
-import os, base64, mariadb, jwt
-
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
-from flask import Flask, request, render_template, redirect, url_for, g
+from flask import Flask, request, render_template, redirect, url_for, g, jsonify
 from operations import DatabaseOperations
 from password_utils import bcrypt, PasswordUtils
 
@@ -10,8 +7,11 @@ from password_utils import bcrypt, PasswordUtils
 from queries import * 
 
 from lib.crypto import *
+from lib.utils import *
 
 from api import api_bp
+
+import geopy.distance
 
 # Load .env.local variables
 load_dotenv()
@@ -82,37 +82,25 @@ def game():
         'ident': current_airport[0],
         'name': current_airport[1],
         'latitude_deg': current_airport[2],
-        'longitude_deg': current_airport[3]
+        'longitude_deg': current_airport[3],
+        'cost_of_flight': 0,
+        'co2_consumtion': 0,
+        'flyable': False
     }
 
     cursor.execute('SELECT ident, name, latitude_deg, longitude_deg FROM airport')
     all_airports = cursor.fetchall()
 
-        
+    flyable_airports = get_flyable_airports(current_airport, all_airports)
+    flyable_airports.append(current_airport_json)
 
-    # Test data. In real game load airports based on current user
-    # cursor.execute("SELECT ident, name, latitude_deg, longitude_deg FROM airport WHERE continent='EU' LIMIT 25")
-    # results = cursor.fetchall()
-
-    # results_arr = []
-    # for result in results:
-    #     results_arr.append({
-    #         'ident': result[0],
-    #         'name': result[1],
-    #         'latitude_deg': result[2],
-    #         'longitude_deg': result[3]
-    #     })
-
-
-    page_data = { 
-        'airports': results_arr,
+    page_data = {
+        'airports': flyable_airports,
         'current_airport': current_airport_json,
         'access_token_data': access_token_data
-        }
+    }
 
-    # return render_template('game.html', data=page_data)
-    return 'game'
-
+    return render_template('game.html', data=page_data)
 
 @app.route('/sign_up', methods=['GET', 'POST'])
 @valid_session_token_middleware
@@ -148,7 +136,7 @@ def sign_up():
             if cursor.fetchone() is None:
                 cursor.execute(
                     "INSERT INTO player (user_name, password, co2_consumed, money, location) VALUES (%s, %s, %s, %s, %s)",
-                    (username, hashed_password, 0, 0, valid_location))
+                    (username, hashed_password, 0, 2000, valid_location))
                 
                 conn.commit()
                 

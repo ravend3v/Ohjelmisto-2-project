@@ -1,7 +1,5 @@
-function renderMap(airports) {
-    let currentLocation = airports[0]
-
-    const map = L.map('map').setView([currentLocation['latitude_deg'], currentLocation['longitude_deg']], 7)
+function renderMap(airports, current_airport, access_token_data) {
+    const map = L.map('map').setView([current_airport['latitude_deg'], current_airport['longitude_deg']], 7)
     const tile = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.{ext}', {
         minZoom: 4,
         maxZoom: 12,
@@ -29,7 +27,7 @@ function renderMap(airports) {
 
         L.DomEvent.on(button, 'click', (e) => {
             e.preventDefault()
-            map.setView([currentLocation['latitude_deg'], currentLocation['longitude_deg']], 7)
+            map.setView([current_airport['latitude_deg'], current_airport['longitude_deg']], 7)
         })
 
         return container
@@ -46,10 +44,10 @@ function renderMap(airports) {
 
     for (const index in airports) {
         const airport = airports[index]
-        const { ident, name, longitude_deg, latitude_deg } = airport
+        const { ident, name, longitude_deg, latitude_deg, cost_of_flight, co2_consumption, flyable } = airport
         
         let iconColor = 'red'
-        if (longitude_deg == currentLocation['longitude_deg'] && latitude_deg == currentLocation['latitude_deg']) {
+        if (longitude_deg == current_airport['longitude_deg'] && latitude_deg == current_airport['latitude_deg']) {
             iconColor = 'blue'
         }
         const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${iconColor}.png`
@@ -63,10 +61,29 @@ function renderMap(airports) {
             })
         marker.addTo(map)
 
-        marker.on('click', () => {
-            let flyTo = confirm(`Do you want to fly to ${name}`)
-            if (flyTo) alert('yay')
-            else alert('aaawww man :(')
+        marker.on('click', async () => {
+            if (flyable) {
+                let flyTo = confirm(`Do you want to fly to ${name}`)
+                if (flyTo) {
+                    const req = await fetch(`/api/fly_to/${ident}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${access_token_data['access_token']}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            'user_Id': access_token_data['user_Id'],
+                            cost_of_flight,
+                            co2_consumption
+                        })
+                    })
+                    const res = await req.json()
+                    console.log(res)
+                }
+            }
+            else {
+                alert('Unable to fly to airport')
+            }
         })
     }
 }

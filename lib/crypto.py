@@ -82,7 +82,6 @@ def get_access_token(req: Request):
     cursor = conn.cursor()
 
     if session_token:
-        print("this happens")
         try:
             decoded_session_token = valid_session_token(session_token)
             if not decoded_session_token['valid']:
@@ -115,5 +114,5 @@ def get_access_token(req: Request):
             conn.close()
             cursor.close()
 
-    # return response_body
+    return response_body
 
