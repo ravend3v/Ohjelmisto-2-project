@@ -3,32 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Flight Game</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
       rel="stylesheet"
     />
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-      #player-data,
-      #search {
-        left: 50%;
-        transform: translate(-50%);
-      }
-
-      #player-data,
-      #nav-bar,
-      #search {
-        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-      }
-
-      #search-icon {
-        transform: translateY(-50%);
-      }
-    </style>
   </head>
   <body>
     <div id="map" class="h-screen"></div>
@@ -66,14 +49,48 @@
         <i class="fa-solid fa-gear"></i>
       </button>
     </div>
-
+    
     <div
       id="player-data"
       class="bg-white z-[1000] absolute bottom-4 px-4 py-2 rounded-md flex flex-col items-center gap-4"
-    >
+      >
       <h1 class="font-semibold text-xl">
-        {{ data.access_token_data.user }}, {{ data.current_airport }}
+        {{ data.access_token_data.user }}, {{ data.current_airport.name }}
       </h1>
+    </div>
+  
+    <div id="confirm-flight-popup" class="bg-white z-[1000] absolute top-1/2 px-8 h-48 rounded-md hidden flex-col items-center justify-evenly">
+      <h1 id="confirm-flight-title" class="text-xl font-semibold">Do you want to fly to {airport}</h1>
+
+      <div class="w-full flex justify-evenly">
+        <button id="confirm-flight" class="border-solid border-2 border-black rounded-md py-2 px-8 active:scale-95">Yes</button>
+        <button id="deny-flight" class="border-solid border-2 border-black rounded-md py-2 px-8 active:scale-95">No</button>
+      </div>
+    </div>
+
+    <div id="trivia" class="bg-white z-[1000] absolute top-1/2 px-8 py-4 rounded-md hidden flex-col items-center justify-evenly gap-4">
+      <h1 id="tirvia-question" class="text-xl font-semibold">Question</h1>
+
+      <form id="trivia-form">
+        <div class="flex flex-col items-center gap-4">
+          <div>
+            <div class="option">
+              <input type="checkbox" class="trivia-checkbox" onclick="HandleCheckBoxClick(this)" name="option1" id="option1">
+              <label for="option1" id="option-1-label">Option 1</label>
+            </div>
+            <div class="option">
+              <input type="checkbox" class="trivia-checkbox" onclick="HandleCheckBoxClick(this)" name="option2" id="option2">
+              <label for="option2" id="option-2-label">Option 2</label>
+            </div>
+            <div class="option">
+              <input type="checkbox" class="trivia-checkbox" onclick="HandleCheckBoxClick(this)" name="option3" id="option3">
+              <label for="option3" id="option-3-label">Option 3</label>
+            </div>
+          </div>
+  
+          <button id="trivia-form-submit" type="submit" class="border-solid border-2 border-black rounded-md py-2 px-4 active:scale-95">Guess</button>
+        </div>
+      </form>
     </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
