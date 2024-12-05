@@ -44,7 +44,7 @@ function renderMap(airports, current_airport, access_token_data) {
 
     for (const index in airports) {
         const airport = airports[index]
-        const { ident, name, longitude_deg, latitude_deg, cost_of_flight, co2_consumption, flyable } = airport
+        const { ident, name, longitude_deg, latitude_deg, continent, cost_of_flight, co2_consumption, flyable } = airport
         
         let iconColor = 'red'
         if (longitude_deg == current_airport['longitude_deg'] && latitude_deg == current_airport['latitude_deg']) {
@@ -61,24 +61,51 @@ function renderMap(airports, current_airport, access_token_data) {
             })
         marker.addTo(map)
 
-        marker.on('click', async () => {
+        marker.on('click', () => {
+            let confirmFlightPopup = document.getElementById('confirm-flight-popup')
+            let confirmFlightTitle = document.getElementById('confirm-flight-title')
+
+            let trivia = document.getElementById('trivia')
+
             if (flyable) {
-                let flyTo = confirm(`Do you want to fly to ${name}`)
-                if (flyTo) {
-                    const req = await fetch(`/api/fly_to/${ident}`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${access_token_data['access_token']}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            'user_Id': access_token_data['user_Id'],
-                            cost_of_flight,
-                            co2_consumption
+                confirmFlightPopup.style.display = 'flex'
+                confirmFlightTitle.innerHTML = `Do you want to fly to ${name}`
+
+                document.getElementById('deny-flight').onclick = () => {
+                    confirmFlightPopup.style.display = 'none'
+                }
+                document.getElementById('confirm-flight').onclick = () => {
+                    confirmFlightPopup.style.display = 'none'
+                    trivia.style.display = 'flex'
+
+                    /* INSERT TRIVIA API REQUEST HERE */
+
+                    document.getElementById('trivia-form').onsubmit = async (e) => {
+                        e.preventDefault()
+
+                        const checkedOption = document.querySelector('.trivia-checkbox:checked')
+                        
+                        const updateLocationRequest = await fetch(`/api/fly_to/${ident}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${access_token_data['access_token']}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                'user_Id': access_token_data['user_Id'],
+                                'winnings': Math.random() * (cost_of_flight * 2 - cost_of_flight * 0.5) + cost_of_flight * 0.5,
+                                continent,
+                                cost_of_flight,
+                                co2_consumption
+                            })
                         })
-                    })
-                    const res = await req.json()
-                    console.log(res)
+                        const updateLocationResponse = await updateLocationRequest.json()
+                        if (!updateLocationResponse['error']) {
+                            location.reload()
+                        } else {
+                            alert(updateLocationResponse['message'])
+                        }
+                    }
                 }
             }
             else {
@@ -86,4 +113,11 @@ function renderMap(airports, current_airport, access_token_data) {
             }
         })
     }
+}
+
+function HandleCheckBoxClick(clickedCheckBox) {
+    const checkBoxes = document.querySelectorAll('.trivia-checkbox')
+    checkBoxes.forEach(checkBox => {
+        if (checkBox !== clickedCheckBox) { checkBox.checked = false }
+    })
 }
