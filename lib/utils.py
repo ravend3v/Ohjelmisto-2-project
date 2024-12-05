@@ -5,7 +5,7 @@ def get_flyable_airports(current_airport, all_airports):
 
     current_lat = current_airport[2]
     current_lon = current_airport[3]
-    player_money = current_airport[4]
+    player_money = current_airport[5]
 
     for airport in all_airports:
         distance_to_airport = geopy.distance.geodesic(
@@ -22,6 +22,7 @@ def get_flyable_airports(current_airport, all_airports):
                     'name': airport[1],
                     'latitude_deg': airport[2],
                     'longitude_deg': airport[3],
+                    'continent': airport[4],
                     'cost_of_flight': cost_of_flight,
                     'co2_consumption': co2_consumption,
                     'flyable': True
