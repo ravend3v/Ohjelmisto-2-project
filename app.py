@@ -235,6 +235,13 @@ def start_location():
         selected_location = request.form.get('location')
 
         if selected_location and any(city["name"] == selected_location for city in cities):
+            conn = DatabaseOperations.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT ident FROM airport WHERE name = %s", (selected_location,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+
             return redirect(url_for('main_game', location = selected_location), 301)
         else:
             error_message = "Please select a starting location"
