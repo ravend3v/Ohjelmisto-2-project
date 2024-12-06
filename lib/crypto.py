@@ -1,6 +1,6 @@
 import os, base64, jwt
 
-from flask import Request
+from flask import Request, Response, Flask, redirect
 from operations import DatabaseOperations
 from datetime import datetime, timedelta
 
@@ -62,6 +62,18 @@ def valid_access_token(access_token: str, session_token: str):
         cursor.close()
 
 
+def create_session_token(payload, app: Flask) -> Response:
+    session_token = jwt.encode(payload, JWT_RSA_PRIVATE_KEY, algorithm=SESSION_TOKEN_ALGO)
+
+    response = app.make_response(redirect('/'))
+    response.set_cookie('session_token', session_token,
+                        expires=datetime.now() + timedelta(days=7),
+                        httponly=True,
+                        samesite='Strict')
+    
+    return response
+
+
 def get_access_token(req: Request):
     session_token = req.cookies.get('session_token')
     response_body = { 'success': False, 'access_token': '', 'user': '', 'user_Id': '' }
@@ -70,7 +82,6 @@ def get_access_token(req: Request):
     cursor = conn.cursor()
 
     if session_token:
-        print("this happens")
         try:
             decoded_session_token = valid_session_token(session_token)
             if not decoded_session_token['valid']:
@@ -103,5 +114,5 @@ def get_access_token(req: Request):
             conn.close()
             cursor.close()
 
-    # return response_body
+    return response_body
 
