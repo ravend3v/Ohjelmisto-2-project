@@ -1,0 +1,28 @@
+#player-data,
+#confirm-flight-popup,
+#trivia,
+#search {
+  left: 50%;
+  transform: translate(-50%);
+}
+#confirm-flight-popup,
+#trivia {
+  transform: translate(-50%, -50%);
+}
+
+#player-data,
+#nav-bar,
+#confirm-flight-popup,
+#trivia,
+#search {
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+#search-icon {
+  transform: translateY(-50%);
+}
+
+.option {
+    display: flex;
+    gap: 2rem;
+}

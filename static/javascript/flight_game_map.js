@@ -1,7 +1,5 @@
-function renderMap(airports) {
-    let currentLocation = airports[0]
-
-    const map = L.map('map').setView([currentLocation['latitude_deg'], currentLocation['longitude_deg']], 7)
+function renderMap(airports, current_airport, access_token_data) {
+    const map = L.map('map').setView([current_airport['latitude_deg'], current_airport['longitude_deg']], 7)
     const tile = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.{ext}', {
         minZoom: 4,
         maxZoom: 12,
@@ -29,7 +27,7 @@ function renderMap(airports) {
 
         L.DomEvent.on(button, 'click', (e) => {
             e.preventDefault()
-            map.setView([currentLocation['latitude_deg'], currentLocation['longitude_deg']], 7)
+            map.setView([current_airport['latitude_deg'], current_airport['longitude_deg']], 7)
         })
 
         return container
@@ -46,10 +44,10 @@ function renderMap(airports) {
 
     for (const index in airports) {
         const airport = airports[index]
-        const { ident, name, longitude_deg, latitude_deg } = airport
+        const { ident, name, longitude_deg, latitude_deg, continent, cost_of_flight, co2_consumption, flyable } = airport
         
         let iconColor = 'red'
-        if (longitude_deg == currentLocation['longitude_deg'] && latitude_deg == currentLocation['latitude_deg']) {
+        if (longitude_deg == current_airport['longitude_deg'] && latitude_deg == current_airport['latitude_deg']) {
             iconColor = 'blue'
         }
         const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${iconColor}.png`
@@ -64,9 +62,62 @@ function renderMap(airports) {
         marker.addTo(map)
 
         marker.on('click', () => {
-            let flyTo = confirm(`Do you want to fly to ${name}`)
-            if (flyTo) alert('yay')
-            else alert('aaawww man :(')
+            let confirmFlightPopup = document.getElementById('confirm-flight-popup')
+            let confirmFlightTitle = document.getElementById('confirm-flight-title')
+
+            let trivia = document.getElementById('trivia')
+
+            if (flyable) {
+                confirmFlightPopup.style.display = 'flex'
+                confirmFlightTitle.innerHTML = `Do you want to fly to ${name}`
+
+                document.getElementById('deny-flight').onclick = () => {
+                    confirmFlightPopup.style.display = 'none'
+                }
+                document.getElementById('confirm-flight').onclick = () => {
+                    confirmFlightPopup.style.display = 'none'
+                    trivia.style.display = 'flex'
+
+                    /* INSERT TRIVIA API REQUEST HERE */
+
+                    document.getElementById('trivia-form').onsubmit = async (e) => {
+                        e.preventDefault()
+
+                        const checkedOption = document.querySelector('.trivia-checkbox:checked')
+                        
+                        const updateLocationRequest = await fetch(`/api/fly_to/${ident}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${access_token_data['access_token']}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                'user_Id': access_token_data['user_Id'],
+                                'winnings': Math.random() * (cost_of_flight * 2 - cost_of_flight * 0.5) + cost_of_flight * 0.5,
+                                continent,
+                                cost_of_flight,
+                                co2_consumption
+                            })
+                        })
+                        const updateLocationResponse = await updateLocationRequest.json()
+                        if (!updateLocationResponse['error']) {
+                            location.reload()
+                        } else {
+                            alert(updateLocationResponse['message'])
+                        }
+                    }
+                }
+            }
+            else {
+                alert('Unable to fly to airport')
+            }
         })
     }
+}
+
+function HandleCheckBoxClick(clickedCheckBox) {
+    const checkBoxes = document.querySelectorAll('.trivia-checkbox')
+    checkBoxes.forEach(checkBox => {
+        if (checkBox !== clickedCheckBox) { checkBox.checked = false }
+    })
 }

@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 from lib.crypto import valid_access_token
+from operations import DatabaseOperations
+from queries import *
 
 api_bp = Blueprint('api', __name__)
 
@@ -8,15 +10,36 @@ def verify_access_token():
     auth_header = request.headers.get('Authorization')
 
     if not auth_header:
-        return jsonify({ 'error': True, 'message': 'Missing Authorization header' })
+        return jsonify({ 'error': True, 'message': 'Missing Authorization header' }), 400
     
     access_token = auth_header.removeprefix('Bearer ')
 
     valid_token = valid_access_token(access_token, request.cookies.get('session_token'))
     if not valid_token['valid']:
-        return jsonify({ 'error': True, 'message': valid_token['message'] })
+        return jsonify({ 'error': True, 'message': valid_token['message'] }), 401
 
 
 @api_bp.route('/test', methods=['GET'])
 def test_api():
     return jsonify({ 'error': False, 'message': 'it works' })
+
+@api_bp.route('/fly_to/<ident>', methods=['POST'])
+def fly_to(ident):
+    try:
+        request_body_data = request.json
+
+        conn = DatabaseOperations.get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(UPDATE_PLAYER_DATA, 
+                       (ident,
+                        request_body_data['co2_consumption'],
+                        -request_body_data['cost_of_flight'] + request_body_data['winnings'],
+                        request_body_data['user_Id']
+                        ))
+        cursor.execute(UPDATE_PLAYER_VISITED, (request_body_data['user_Id'], request_body_data['continent'], request_body_data['user_Id'], request_body_data['continent']))
+        conn.commit()
+
+        return jsonify({ 'error': False, 'message': 'player data updated succesfully' }), 200
+    except Exception as e:
+        return jsonify({ 'error': True, 'message': f'{e}' }), 500
