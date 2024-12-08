@@ -21,12 +21,17 @@
           </li>
         </ul>
       </nav>
-      <div>
+      <div class="flex flex-col items-center gap-4 mt-10">
         {% if data.games %}
-            <ul>
-                {% for game in data.games %}
-                    <li>Game ID: {{ game[0] }}, Players: {{ game[1] }}</li>
-                {% endfor %}
+            <ul class="w-full max-w-md">
+              {% for game in data.games %}
+              <li class="bg-white p-4 rounded-lg shadow-md mb-4 hover:bg-indigo-700 hover:text-white cursor-pointer">
+                  <a href="{{ url_for('game', game_id=game[0]) }}" class="block">
+                      <p class="text-lg font-semibold">Game ID: {{ game[0] }}</p>
+                      <p>Players: {{ game[1] }}</p>
+                  </a>
+              </li>
+              {% endfor %}
             </ul>
         {% else %}
             <p>No games found.</p>
