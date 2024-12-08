@@ -99,6 +99,7 @@ def game():
         'airports': flyable_airports,
         'current_airport': current_airport_json,
         'access_token_data': access_token_data,
+        'money': current_airport[5]
     }
 
     return render_template('game.html', data=page_data)

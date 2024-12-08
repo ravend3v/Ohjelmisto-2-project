@@ -74,16 +74,55 @@ function renderMap(airports, current_airport, access_token_data) {
                 document.getElementById('deny-flight').onclick = () => {
                     confirmFlightPopup.style.display = 'none'
                 }
-                document.getElementById('confirm-flight').onclick = () => {
+                document.getElementById('confirm-flight').onclick = async () => {
                     confirmFlightPopup.style.display = 'none'
                     trivia.style.display = 'flex'
 
-                    /* INSERT TRIVIA API REQUEST HERE */
+                    const triviaApiUrl = "https://the-trivia-api.com/api/questions?categories=geography&limit=1&region=FI&difficulty=medium"
+                    const triviaRequest = await fetch(triviaApiUrl)
+                    const triviaResponse = await triviaRequest.json()
+
+                    const question = triviaResponse[0]['question']
+                    const correctAnswer = triviaResponse[0]['correctAnswer']
+                    const options = triviaResponse[0]['incorrectAnswers']
+                    options.push(correctAnswer)
+
+                    const shuffeledOptions = shuffleArray(options)
+
+                    document.getElementById('trivia-question').innerHTML = question
+
+                    const triviaOptionsContainer = document.getElementById('trivia-options-container')
+
+                    shuffeledOptions.forEach((item, index) => {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.className = 'option';
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.className = 'trivia-checkbox';
+                        checkbox.name = item;
+                        checkbox.id = `option${index + 1}`;
+                        checkbox.setAttribute('onclick', 'HandleCheckBoxClick(this)');
+
+                        const label = document.createElement('label');
+                        label.htmlFor = `option${index + 1}`;
+                        label.id = `option-${index + 1}-label`;
+                        label.textContent = item;
+
+                        optionDiv.appendChild(checkbox);
+                        optionDiv.appendChild(label);
+                    
+                        triviaOptionsContainer.appendChild(optionDiv);
+                    })
+
 
                     document.getElementById('trivia-form').onsubmit = async (e) => {
                         e.preventDefault()
 
                         const checkedOption = document.querySelector('.trivia-checkbox:checked')
+                        
+                        const correct = checkedOption.name == correctAnswer
+                        const winnings = correct ? Math.random() * (cost_of_flight * 2 - cost_of_flight * 0.5) + cost_of_flight * 0.5 : 0
                         
                         const updateLocationRequest = await fetch(`/api/fly_to/${ident}`, {
                             method: 'POST',
@@ -93,7 +132,7 @@ function renderMap(airports, current_airport, access_token_data) {
                             },
                             body: JSON.stringify({
                                 'user_Id': access_token_data['user_Id'],
-                                'winnings': Math.random() * (cost_of_flight * 2 - cost_of_flight * 0.5) + cost_of_flight * 0.5,
+                                winnings,
                                 continent,
                                 cost_of_flight,
                                 co2_consumption
@@ -101,7 +140,11 @@ function renderMap(airports, current_airport, access_token_data) {
                         })
                         const updateLocationResponse = await updateLocationRequest.json()
                         if (!updateLocationResponse['error']) {
-                            location.reload()
+                            trivia.style.display = 'none'
+                            document.getElementById('correct').style.display = 'flex'
+                            const correctTitle = document.getElementById('correct-title')
+                            correctTitle.style.color = correct ? 'green' : 'red'
+                            correctTitle.innerHTML = correct ? 'Correct' : 'Incorrect'
                         } else {
                             alert(updateLocationResponse['message'])
                         }
@@ -114,6 +157,16 @@ function renderMap(airports, current_airport, access_token_data) {
         })
     }
 }
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
 
 function HandleCheckBoxClick(clickedCheckBox) {
     const checkBoxes = document.querySelectorAll('.trivia-checkbox')

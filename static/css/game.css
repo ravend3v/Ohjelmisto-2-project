@@ -1,12 +1,14 @@
 #player-data,
 #confirm-flight-popup,
 #trivia,
+#correct,
 #search {
   left: 50%;
   transform: translate(-50%);
 }
 #confirm-flight-popup,
-#trivia {
+#trivia,
+#correct {
   transform: translate(-50%, -50%);
 }
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flight Game</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
@@ -55,7 +55,7 @@
       class="bg-white z-[1000] absolute bottom-4 px-4 py-2 rounded-md flex flex-col items-center gap-4"
       >
       <h1 class="font-semibold text-xl">
-        {{ data.access_token_data.user }}, {{ data.current_airport.name }}
+        {{ data.access_token_data.user }} - {{ data.money }}€, {{ data.current_airport.name }}
       </h1>
     </div>
   
@@ -69,23 +69,11 @@
     </div>
 
     <div id="trivia" class="bg-white z-[1000] absolute top-1/2 px-8 py-4 rounded-md hidden flex-col items-center justify-evenly gap-4">
-      <h1 id="tirvia-question" class="text-xl font-semibold">Question</h1>
+      <h1 id="trivia-question" class="text-xl font-semibold"></h1>
 
       <form id="trivia-form">
         <div class="flex flex-col items-center gap-4">
-          <div>
-            <div class="option">
-              <input type="checkbox" class="trivia-checkbox" onclick="HandleCheckBoxClick(this)" name="option1" id="option1">
-              <label for="option1" id="option-1-label">Option 1</label>
-            </div>
-            <div class="option">
-              <input type="checkbox" class="trivia-checkbox" onclick="HandleCheckBoxClick(this)" name="option2" id="option2">
-              <label for="option2" id="option-2-label">Option 2</label>
-            </div>
-            <div class="option">
-              <input type="checkbox" class="trivia-checkbox" onclick="HandleCheckBoxClick(this)" name="option3" id="option3">
-              <label for="option3" id="option-3-label">Option 3</label>
-            </div>
+          <div id="trivia-options-container">
           </div>
   
           <button id="trivia-form-submit" type="submit" class="border-solid border-2 border-black rounded-md py-2 px-4 active:scale-95">Guess</button>
@@ -93,7 +81,12 @@
       </form>
     </div>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <div id="correct" class="bg-white z-[1000] absolute top-1/2 px-8 py-4 rounded-md hidden flex-col items-center justify-evenly gap-4">
+      <h1 id="correct-title" class="text-2xl font-semibold">correct</h1>
+      <button onclick="location.reload()" class="border-solid border-2 border-black rounded-md py-2 px-4 active:scale-95">Ok</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='javascript/flight_game_map.js') }}"></script>
     <script type="text/javascript">
       const pageData = {{ data | tojson }}
