@@ -281,6 +281,7 @@ def logout():
     return response, 301
 
 @app.route('/start_location', methods=['GET', 'POST'])
+@get_access_token_middleware
 def start_location():
 
     cities = [
@@ -296,6 +297,7 @@ def start_location():
             conn = DatabaseOperations.get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT ident FROM airport WHERE name = %s", (selected_location,))
+            result = cursor.fetchone()  
             conn.commit()
             cursor.close()
             conn.close()
@@ -303,9 +305,9 @@ def start_location():
             return redirect(url_for('main_game', location = selected_location), 301)
         else:
             error_message = "Please select a starting location"
-            return render_template('start_location.html', error_message=error_message), 400
+            return render_template('start_location.html', error_message=error_message, data={'user': g.access_token_data['user']}), 400
 
-    return render_template('start_location.html'), 200
+    return render_template('start_location.html', data={'user': g.access_token_data['user']}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
