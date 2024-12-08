@@ -8,6 +8,12 @@ GET_GAMES = """
     GROUP BY pg.game_id;
 """
 
+UPDATE_PLAYER_LOCATION = """
+    UPDATE player
+    SET location = %s
+    WHERE Id = %s;
+"""
+
 GET_GAME_BY_ID = """
     SELECT pg.game_id, 
         GROUP_CONCAT(p.user_name ORDER BY p.user_name ASC SEPARATOR ',  ') AS players
@@ -40,3 +46,4 @@ UPDATE_PLAYER_VISITED = """
         WHERE player_id = %s AND visited_continent = %s
     )
 """
+
