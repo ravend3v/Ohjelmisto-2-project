@@ -47,9 +47,8 @@ def fly_to(ident):
 @api_bp.route('/select_start_location', methods=['POST'])
 def select_start_location():
     try:
-        access_token_data = g.get('access_token_data')
-        user_id = access_token_data['user_Id']
-        selected_location = request.json.get('location')
+        selected_location = request.json['location']
+        user_id = request.json['user_Id']
 
         if not selected_location:
             return jsonify({'error': True, 'message': 'No location selected'}), 400
@@ -58,10 +57,11 @@ def select_start_location():
         cursor = conn.cursor()
 
         # Update the player's location
-        cursor.execute(UPDATE_PLAYER_LOCATION, (selected_location, user_id))
+        cursor.execute(CREATE_PLAYER_BASE_STATS, (selected_location, 2000, user_id))
 
         # Create a new game
-        cursor.execute(CREATE_GAME, (user_id, selected_location))
+        cursor.execute(CREATE_GAME)
+        cursor.execute(CREATE_PLAYER_GAME, (user_id, cursor.lastrowid))
         conn.commit()
 
         return jsonify({'error': False, 'message': 'Game created successfully', 'selected_location': selected_location}), 200

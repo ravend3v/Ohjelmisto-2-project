@@ -14,17 +14,17 @@
         </div>
         <div class="space-y-4 w-full max-w-md">
             <menu class="flex flex-col gap-6 bg-white shadow-lg rounded-lg w-full p-4">
-                <li class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:cursor-pointer" id="helsinki-vantaa" onclick="selectLocation('Helsinki-Vantaa')">
+                <li class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:cursor-pointer" id="helsinki-vantaa" onclick="selectLocation('EFHK')">
                     <button type="button" class="w-full h-full text-lg font-medium bg-transparent focus:outline-none">
                         Helsinki-Vantaa
                     </button>
                 </li>
-                <li class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:cursor-pointer" id="paris-charles-de-gaulle" onclick="selectLocation('Paris-Charles de Gaulle')">
+                <li class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:cursor-pointer" id="paris-charles-de-gaulle" onclick="selectLocation('LFPG')">
                     <button type="button" class="w-full h-full text-lg font-medium bg-transparent focus:outline-none">
                         Paris-Charles de Gaulle
                     </button>
                 </li>
-                <li class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:cursor-pointer" id="berlin-tegel" onclick="selectLocation('Berlin-Tegel')">
+                <li class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:cursor-pointer" id="berlin-tegel" onclick="selectLocation('EDDB')">
                     <button type="button" class="w-full h-full text-lg font-medium bg-transparent focus:outline-none">
                         Berlin-Tegel
                     </button>
@@ -44,7 +44,7 @@
     </main>
 
     <script type="text/javascript">
-        const accessToken = {{ data | tojson }}.access_token_data.access_token;
+        const accessTokenData = {{ data | tojson }}.access_token_data;
 
         let selectedLocation = '';
 
@@ -64,9 +64,9 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + accessToken
+                    'Authorization': 'Bearer ' + accessTokenData.access_token
                 },
-                body: JSON.stringify({ location: selectedLocation })
+                body: JSON.stringify({ location: selectedLocation, user_Id: accessTokenData.user_Id })
             });
 
             const result = await response.json();

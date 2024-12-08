@@ -47,7 +47,16 @@ UPDATE_PLAYER_VISITED = """
     )
 """
 
+CREATE_PLAYER_BASE_STATS = """
+    UPDATE player
+    SET location = %s, money = %s
+    WHERE Id = %s
+"""
+
 CREATE_GAME = """
-INSERT INTO games (user_id, start_location, money, co2_consumed)
-VALUES (%s, %s, 2000, 0)
+    INSERT INTO game (game_over) VALUES (0)
+"""
+
+CREATE_PLAYER_GAME = """
+    INSERT INTO player_game (player_id, game_id) VALUES (%s, %s)
 """
