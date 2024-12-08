@@ -1,65 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <title>start_location</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Location</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
 <body class="bg-gray-100">
+    <main class="flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 class="text-3xl">Flight Game</h1>
+        <div class="bg-white p-2 shadow-md rounded-md">
+            <p id="user">Logged in as {{ data.user }}</p>
+        </div>
+        <div class="space-y-4 w-full max-w-md">
+            <menu class="flex flex-col gap-6 bg-white shadow-lg rounded-lg w-full p-4">
+                <li class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:cursor-pointer" id="helsinki-vantaa" onclick="selectLocation('EFHK')">
+                    <button type="button" class="w-full h-full text-lg font-medium bg-transparent focus:outline-none">
+                        Helsinki-Vantaa
+                    </button>
+                </li>
+                <li class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:cursor-pointer" id="paris-charles-de-gaulle" onclick="selectLocation('LFPG')">
+                    <button type="button" class="w-full h-full text-lg font-medium bg-transparent focus:outline-none">
+                        Paris-Charles de Gaulle
+                    </button>
+                </li>
+                <li class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:cursor-pointer" id="berlin-tegel" onclick="selectLocation('EDDB')">
+                    <button type="button" class="w-full h-full text-lg font-medium bg-transparent focus:outline-none">
+                        Berlin-Tegel
+                    </button>
+                </li>
+            </menu>
+            <div class="bg-white p-2 shadow-md rounded-md">
+                <p id="selected-location-text">No location selected</p>
+            </div>
+            <button class="bg-blue-500 text-white p-2 rounded-md" onclick="createGame()">Create Game</button>
+            <input type="hidden" id="selected-location" name="selected-location">
+        </div>
+        {% if error_message %}
+        <div class="bg-red-500 text-white p-2 rounded-md">
+            <p>{{ error_message }}</p>
+        </div>
+        {% endif %}
+    </main>
 
+    <script type="text/javascript">
+        const accessTokenData = {{ data | tojson }}.access_token_data;
 
-<main id="main" class="flex flex-col gap-4 mt-10 justify-center items-center">
-    <h1 class="text-3xl">Flight game</h1>
-    <div class="bg-white p-2 shadow-md rounded-md">
-        <p id="user">Logged in as {{ data.user }}</p>
-    </div>
-    <form action="{{ url_for('start_location') }}" method="POST" class="space-y-4 w-full max-w-md">
-        <menu class="flex flex-col gap-6 bg-white shadow-lg rounded-lg w-full p-4">
+        let selectedLocation = '';
 
-            <li
-                    class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:bg-indigo-700 hover:cursor-pointer hover:text-white"
-            >
-                <button
-                        type="submit"
-                        name="location"
-                        value="Helsinki-Vantaa"
-                        class="w-full h-full text-lg font-medium bg-transparent focus:outline-none"
-                >
-                    Helsinki-Vantaa
-                </button>
-            </li>
+        function selectLocation(location) {
+            selectedLocation = location;
+            document.getElementById('selected-location-text').innerText = 'Currently selected location: ' + location;
+            document.getElementById('selected-location').value = location;
+        }
 
+        async function createGame() {
+            if (!selectedLocation) {
+                alert('Please select a location first.');
+                return;
+            }
 
-            <li
-                    class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:bg-indigo-700 hover:cursor-pointer hover:text-white"
-            >
-                <button
-                        type="submit"
-                        name="location"
-                        value="Paris-Charles de Gaulle"
-                        class="w-full h-full text-lg font-medium bg-transparent focus:outline-none"
-                >
-                    Paris-Charles de Gaulle
-                </button>
-            </li>
+            const response = await fetch('{{ url_for("api.select_start_location") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessTokenData.access_token
+                },
+                body: JSON.stringify({ location: selectedLocation, user_Id: accessTokenData.user_Id })
+            });
 
-
-            <li
-                    class="flex justify-center items-center w-full h-16 bg-gray-50 rounded-lg shadow-md hover:bg-indigo-700 hover:cursor-pointer hover:text-white"
-            >
-                <button
-                        type="submit"
-                        name="location"
-                        value="Berlin-Tegel"
-                        class="w-full h-full text-lg font-medium bg-transparent focus:outline-none"
-                >
-                    Berlin-Tegel
-                </button>
-            </li>
-        </menu>
-    </form>
-</main>
+            const result = await response.json();
+            if (result.error) {
+                alert(result.message);
+            } else {
+                window.location.href = '/game';
+            }
+        }
+    </script>
 </body>
 </html>

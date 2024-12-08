@@ -282,13 +282,18 @@ def logout():
     return response, 301
 
 @app.route('/start_location', methods=['GET', 'POST'])
+@get_access_token_middleware
 def start_location():
-
     cities = [
         {"name": "Helsinki-Vantaa", "icao": "EFHK"},
         {"name": "Paris-Charles de Gaulle", "icao": "LFPO"},
         {"name": "Berlin-Tegel", "icao": "EDDB"}
     ]
+
+    access_token_data = g.get('access_token_data')
+
+    if not access_token_data:
+        return redirect(url_for('login'))
 
     if request.method == 'POST':
         selected_location = request.form.get('location')
@@ -297,16 +302,21 @@ def start_location():
             conn = DatabaseOperations.get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT ident FROM airport WHERE name = %s", (selected_location,))
+            result = cursor.fetchone()
             conn.commit()
             cursor.close()
             conn.close()
 
-            return redirect(url_for('main_game', location = selected_location), 301)
+            if result:
+                return redirect(url_for('main_game', location=selected_location), 301)
+            else:
+                error_message = "Invalid location selected"
+                return render_template('start_location.html', error_message=error_message, data={'user': access_token_data['user'], 'access_token_data': access_token_data}), 400
         else:
             error_message = "Please select a starting location"
-            return render_template('start_location.html', error_message=error_message), 400
+            return render_template('start_location.html', error_message=error_message, data={'user': access_token_data['user'], 'access_token_data': access_token_data}), 400
 
-    return render_template('start_location.html'), 200
+    return render_template('start_location.html', data={'user': access_token_data['user'], 'access_token_data': access_token_data})
 
 if __name__ == '__main__':
     app.run(debug=True)
