@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from lib.crypto import valid_access_token
 from operations import DatabaseOperations
 from queries import *
@@ -18,7 +18,6 @@ def verify_access_token():
     if not valid_token['valid']:
         return jsonify({ 'error': True, 'message': valid_token['message'] }), 401
 
-
 @api_bp.route('/test', methods=['GET'])
 def test_api():
     return jsonify({ 'error': False, 'message': 'it works' })
@@ -32,7 +31,7 @@ def fly_to(ident):
         cursor = conn.cursor()
 
         cursor.execute(UPDATE_PLAYER_DATA, 
-                       (ident,
+                        (ident,
                         request_body_data['co2_consumption'],
                         -request_body_data['cost_of_flight'] + request_body_data['winnings'],
                         request_body_data['user_Id']
@@ -43,3 +42,28 @@ def fly_to(ident):
         return jsonify({ 'error': False, 'message': 'player data updated succesfully' }), 200
     except Exception as e:
         return jsonify({ 'error': True, 'message': f'{e}' }), 500
+    
+    
+@api_bp.route('/select_start_location', methods=['POST'])
+def select_start_location():
+    try:
+        access_token_data = g.get('access_token_data')
+        user_id = access_token_data['user_Id']
+        selected_location = request.json.get('location')
+
+        if not selected_location:
+            return jsonify({'error': True, 'message': 'No location selected'}), 400
+
+        conn = DatabaseOperations.get_db_connection()
+        cursor = conn.cursor()
+
+        # Update the player's location
+        cursor.execute(UPDATE_PLAYER_LOCATION, (selected_location, user_id))
+
+        # Create a new game
+        cursor.execute(CREATE_GAME, (user_id, selected_location))
+        conn.commit()
+
+        return jsonify({'error': False, 'message': 'Game created successfully', 'selected_location': selected_location}), 200
+    except Exception as e:
+        return jsonify({'error': True, 'message': f'{e}'}), 500

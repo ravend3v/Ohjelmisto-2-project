@@ -47,3 +47,7 @@ UPDATE_PLAYER_VISITED = """
     )
 """
 
+CREATE_GAME = """
+INSERT INTO games (user_id, start_location, money, co2_consumed)
+VALUES (%s, %s, 2000, 0)
+"""
