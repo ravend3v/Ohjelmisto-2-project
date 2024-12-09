@@ -73,7 +73,7 @@
             if (result.error) {
                 alert(result.message);
             } else {
-                window.location.href = '/game';
+                location.href = `/game/${result['game_id']}`
             }
         }
     </script>

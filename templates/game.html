@@ -39,9 +39,6 @@
       <a id="exit-to-menu" title="Exit to menu" href="/">
         <i class="fa-solid fa-right-from-bracket"></i>
       </a>
-      <button id="save-game" title="Save game">
-        <i class="fa-solid fa-cloud-arrow-up"></i>
-      </button>
       <button id="game-rules" title="Game rules">
         <i class="fa-regular fa-clipboard"></i>
       </button>
@@ -91,7 +88,7 @@
     <script type="text/javascript">
       const pageData = {{ data | tojson }}
 
-      renderMap(pageData.airports, pageData.current_airport, pageData.access_token_data)
+      renderMap(pageData.airports, pageData.current_airport, pageData.access_token_data, pageData.game_id)
     </script>
   </body>
 </html>
