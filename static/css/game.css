@@ -3,14 +3,14 @@
 #trivia,
 #correct,
 #search,
-#rules{
+#rules-box{
   left: 50%;
   transform: translate(-50%);
 }
 #confirm-flight-popup,
 #trivia,
 #correct,
-#rules{
+#rules-box{
   transform: translate(-50%, -50%);
 }
 
