@@ -11,8 +11,6 @@ from lib.utils import *
 
 from api import api_bp
 
-import geopy.distance
-
 # Load .env.local variables
 load_dotenv()
 
@@ -68,6 +66,13 @@ def landing_page():
     return render_template('landing.html', data=access_token_data), 200
 
 
+@app.route('/game_over')
+def game_over():
+    message = request.args.get('message')
+    color = request.args.get('color')
+
+    return render_template('game_over.html', data={ 'message': message, 'color': color }), 200
+
 @app.route('/game/<int:game_id>', methods=['GET'])
 @get_access_token_middleware
 def game(game_id):
@@ -75,6 +80,9 @@ def game(game_id):
     cursor = conn.cursor()
 
     access_token_data = g.get('access_token_data')
+
+    game_over = False
+    game_status = ''
 
     cursor.execute(GET_GAMES_CURRENT_LOCATION_DATA, (game_id, ))
     current_airport = cursor.fetchone()
@@ -84,19 +92,42 @@ def game(game_id):
         'latitude_deg': current_airport[2],
         'longitude_deg': current_airport[3],
         'continent': current_airport[4],
+        'country': current_airport[6],
         'cost_of_flight': 0,
         'co2_consumtion': 0,
         'flyable': False
     }
 
-    cursor.execute('SELECT ident, name, latitude_deg, longitude_deg, continent FROM airport')
+    cursor.execute(GET_ALL_AIRPORTS)
     all_airports = cursor.fetchall()
 
     flyable_airports = get_flyable_airports(current_airport, all_airports)
+    if len(flyable_airports) < 1:
+        game_over = True
+        cursor.execute('UPDATE game SET game_over = 1 WHERE Id = %s', (game_id, ))
+        conn.commit()
+        game_status = 'LOSER'
+
+    else:
+        all_continents = ['AF', 'AN', 'AS', 'EU', 'NA', 'OC', 'SA']
+
+        cursor.execute(GET_VISITED_CONTINENTS, (game_id, ))
+        vistied_continents = cursor.fetchone()
+
+        if vistied_continents[0] != None:
+            game_over = vistied_continents[0].split('|') == all_continents
+            if game_over:
+                cursor.execute('UPDATE game SET game_over = 1 WHERE Id = %s', (game_id, ))
+                conn.commit()
+                game_status = 'WINNER' if game_over else ''
+    
+
     flyable_airports.append(current_airport_json)
 
     page_data = {
         'game_id': game_id,
+        'game_over': game_over,
+        'game_status': game_status,
         'airports': flyable_airports,
         'current_airport': current_airport_json,
         'access_token_data': access_token_data,

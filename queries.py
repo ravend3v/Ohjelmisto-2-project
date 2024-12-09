@@ -8,11 +8,20 @@ GET_GAMES = """
 """
 
 GET_GAMES_CURRENT_LOCATION_DATA = """
-    SELECT airport.ident, airport.name, airport.latitude_deg, airport.longitude_deg, airport.continent, game.money
+    SELECT airport.ident, airport.name, airport.latitude_deg, airport.longitude_deg, airport.continent, game.money, country.name
     FROM airport
     JOIN game
     ON airport.ident = game.location
+    JOIN country
+    ON airport.iso_country = country.iso_country
     WHERE game.Id = %s
+"""
+
+GET_ALL_AIRPORTS = """
+    SELECT airport.ident, airport.name, airport.latitude_deg, airport.longitude_deg, airport.continent, country.name
+    FROM airport
+    JOIN country
+    ON airport.iso_country = country.iso_country
 """
 
 UPDATE_GAME_DATA = """
@@ -43,4 +52,10 @@ CREATE_GAME = """
 
 CREATE_PLAYER_GAME = """
     INSERT INTO player_game (player_id, game_id) VALUES (%s, %s)
+"""
+
+GET_VISITED_CONTINENTS = """
+    SELECT GROUP_CONCAT(DISTINCT gv.visited_continent ORDER BY gv.visited_continent SEPARATOR '|') AS visited_locations
+    FROM game_visited gv
+    WHERE game_id = %s;
 """
