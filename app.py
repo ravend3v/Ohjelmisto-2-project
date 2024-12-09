@@ -68,15 +68,15 @@ def landing_page():
     return render_template('landing.html', data=access_token_data), 200
 
 
-@app.route('/game', methods=['GET'])
+@app.route('/game/<int:game_id>', methods=['GET'])
 @get_access_token_middleware
-def game():
+def game(game_id):
     conn = DatabaseOperations.get_db_connection()
     cursor = conn.cursor()
 
     access_token_data = g.get('access_token_data')
 
-    cursor.execute(GET_CURRENT_PLAYER_LOCATION_DATA, (access_token_data['user_Id'], ))
+    cursor.execute(GET_GAMES_CURRENT_LOCATION_DATA, (game_id, ))
     current_airport = cursor.fetchone()
     current_airport_json = {
         'ident': current_airport[0],
@@ -96,6 +96,7 @@ def game():
     flyable_airports.append(current_airport_json)
 
     page_data = {
+        'game_id': game_id,
         'airports': flyable_airports,
         'current_airport': current_airport_json,
         'access_token_data': access_token_data,
@@ -125,20 +126,12 @@ def sign_up():
         cursor = conn.cursor()
 
         try:
-            # Check if the default location exists in the airport table
-            cursor.execute("SELECT ident FROM airport WHERE ident = %s", ('',))
-            if cursor.fetchone() is None:
-                # Insert a valid location if the default does not exist
-                cursor.execute("SELECT ident FROM airport LIMIT 1")
-                valid_location = cursor.fetchone()[0]
-            else:
-                valid_location = ''
 
             cursor.execute("SELECT Id FROM player WHERE user_name = %s", (username,))
             if cursor.fetchone() is None:
                 cursor.execute(
-                    "INSERT INTO player (user_name, password, co2_consumed, money, location) VALUES (%s, %s, %s, %s, %s)",
-                    (username, hashed_password, 0, 2000, valid_location))
+                    "INSERT INTO player (user_name, password) VALUES (%s, %s)",
+                    (username, hashed_password))
                 
                 conn.commit()
                 
@@ -223,57 +216,7 @@ def get_player_games(Id):
     finally:
         cursor.close()
         conn.close()
-        
-# Load a game by ID
-@app.route('/load_game/<int:game_id>', methods=['GET'])
-@get_access_token_middleware
-def load_game_by_id(game_id):
-    access_token_data = g.get('access_token_data')
-    
-    # Fetch the game data based on the game_id
-    conn = DatabaseOperations.get_db_connection()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute(GET_GAME_BY_ID, (game_id,))
-        game_data = cursor.fetchone()
-
-        if not game_data:
-            return jsonify({'error': True, 'message': 'Game not found'}), 404
-        
-        # Fetch the current player location data
-        cursor.execute(GET_CURRENT_PLAYER_LOCATION_DATA, (access_token_data['user_Id'], ))
-        current_airport = cursor.fetchone()
-        current_airport_json = {
-            'ident': current_airport[0],
-            'name': current_airport[1],
-            'latitude_deg': current_airport[2],
-            'longitude_deg': current_airport[3],
-            'continent': current_airport[4],
-            'cost_of_flight': 0,
-            'co2_consumtion': 0,
-            'flyable': False
-        }
-        
-        cursor.execute('SELECT ident, name, latitude_deg, longitude_deg, continent FROM airport')
-        all_airports = cursor.fetchall()
-        
-        flyable_airports = get_flyable_airports(current_airport, all_airports)
-        flyable_airports.append(current_airport_json)
-        
-        page_data = {
-            'airports': flyable_airports,
-            'current_airport': current_airport_json,
-            'access_token_data': access_token_data,
-        }
-        
-        return render_template('game.html', data=page_data)
-    except Exception as e:
-        return jsonify({'error': True, 'message': f'Error: {e}'}), 500
-    finally:
-        cursor.close()
-        conn.close()
-    
+            
 @app.route('/logout', methods=['GET'])
 def logout():
     response = app.make_response(redirect(url_for('login')))

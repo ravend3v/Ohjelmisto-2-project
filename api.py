@@ -30,13 +30,13 @@ def fly_to(ident):
         conn = DatabaseOperations.get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute(UPDATE_PLAYER_DATA, 
+        cursor.execute(UPDATE_GAME_DATA, 
                         (ident,
                         request_body_data['co2_consumption'],
                         -request_body_data['cost_of_flight'] + request_body_data['winnings'],
-                        request_body_data['user_Id']
+                        request_body_data['game_id']
                         ))
-        cursor.execute(UPDATE_PLAYER_VISITED, (request_body_data['user_Id'], request_body_data['continent'], request_body_data['user_Id'], request_body_data['continent']))
+        cursor.execute(UPDATE_PLAYER_VISITED, (request_body_data['game_id'], request_body_data['continent'], request_body_data['game_id'], request_body_data['continent']))
         conn.commit()
 
         return jsonify({ 'error': False, 'message': 'player data updated succesfully' }), 200
@@ -57,13 +57,14 @@ def select_start_location():
         cursor = conn.cursor()
 
         # Update the player's location
-        cursor.execute(CREATE_PLAYER_BASE_STATS, (selected_location, 2000, user_id))
 
         # Create a new game
-        cursor.execute(CREATE_GAME)
-        cursor.execute(CREATE_PLAYER_GAME, (user_id, cursor.lastrowid))
+        cursor.execute(CREATE_GAME, (2000, 0, selected_location))
+        game_id = cursor.lastrowid
+
+        cursor.execute(CREATE_PLAYER_GAME, (user_id, game_id))
         conn.commit()
 
-        return jsonify({'error': False, 'message': 'Game created successfully', 'selected_location': selected_location}), 200
+        return jsonify({'error': False, 'message': 'Game created successfully', 'selected_location': selected_location, 'game_id': game_id}), 200
     except Exception as e:
         return jsonify({'error': True, 'message': f'{e}'}), 500

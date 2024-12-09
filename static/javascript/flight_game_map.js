@@ -1,4 +1,4 @@
-function renderMap(airports, current_airport, access_token_data) {
+function renderMap(airports, current_airport, access_token_data, game_id) {
     const map = L.map('map').setView([current_airport['latitude_deg'], current_airport['longitude_deg']], 7)
     const tile = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.{ext}', {
         minZoom: 4,
@@ -131,7 +131,7 @@ function renderMap(airports, current_airport, access_token_data) {
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                'user_Id': access_token_data['user_Id'],
+                                game_id,
                                 winnings,
                                 continent,
                                 cost_of_flight,
