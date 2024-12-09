@@ -13,7 +13,7 @@
     />
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body>
+  <body class="bg-black">
     <div id="map" class="h-screen"></div>
     <div
       id="search"
@@ -39,14 +39,11 @@
       <a id="exit-to-menu" title="Exit to menu" href="/">
         <i class="fa-solid fa-right-from-bracket"></i>
       </a>
-      <button id="save-game" title="Save game">
+      <button id="save-game" title="Save game" onclick="alert('Game saved')">
         <i class="fa-solid fa-cloud-arrow-up"></i>
       </button>
-      <button id="game-rules" title="Game rules">
+      <button id="game-rules" title="Game rules" onclick="document.getElementById('rules').style.display='flex'">
         <i class="fa-regular fa-clipboard"></i>
-      </button>
-      <button id="game-settings" title="Game settings">
-        <i class="fa-solid fa-gear"></i>
       </button>
     </div>
     
@@ -84,6 +81,17 @@
     <div id="correct" class="bg-white z-[1000] absolute top-1/2 px-8 py-4 rounded-md hidden flex-col items-center justify-evenly gap-4">
       <h1 id="correct-title" class="text-2xl font-semibold">correct</h1>
       <button onclick="location.reload()" class="border-solid border-2 border-black rounded-md py-2 px-4 active:scale-95">Ok</button>
+    </div>
+
+    <div id="rules-box" class="bg-white z-[1000] absolute top-1/2 px-8 py-4 rounded-md hidden flex-col items-center justify-evenly gap-4">
+      <h1 id="rules-title" class="text-2xl font-semibold">Rules</h1>
+        <p>Pelissä on tarkoitus lentää tiettyihin maihin jokaisessa maailman osassa.
+Maahan lentämisen hinta riippuu etäisyydestä pelaajan sijaintiin.
+Pelissä aloitus kaupunkeja on 3 ja niistä voi valita yhden, nämä maat pysyvät samalla jokaisella pelikerralla.
+Jokaisessa maan vaihtoehtoisista kaupungista on oma trivia kysymys kyseisestä maasta tai kaunpungista. Oikea vastaus palkitsee pelaajan rahalla.
+Pelaaja voi ostaa lentolippuja ja lentää uusiin maihin, joista toiset ovat halvempia kuin toiset.
+Lyhyempi matka on kalliimpi kuin pidempi matka.</p>
+      <button onclick="document.getElementById('rules').style.display='none'" class="border-solid border-2 border-black rounded-md py-2 px-4 active:scale-95">Ok</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

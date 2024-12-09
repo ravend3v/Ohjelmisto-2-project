@@ -2,13 +2,15 @@
 #confirm-flight-popup,
 #trivia,
 #correct,
-#search {
+#search,
+#rules-box{
   left: 50%;
   transform: translate(-50%);
 }
 #confirm-flight-popup,
 #trivia,
-#correct {
+#correct,
+#rules-box{
   transform: translate(-50%, -50%);
 }
 
