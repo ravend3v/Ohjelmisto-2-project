@@ -12,6 +12,10 @@ Vanilla HTML
 ## Project Structure
 ![alt text](image.png)
 
+## Database
+![image](https://github.com/user-attachments/assets/a30dca42-3d27-425c-9b63-0adb77d97e8a)
+
+
 ## Setup Instructions
 ### Clone the repository:
 `git clone <repository-url>`
