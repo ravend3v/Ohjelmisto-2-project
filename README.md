@@ -12,6 +12,9 @@ Vanilla HTML
 ## Project Structure
 ![alt text](image.png)
 
+## Database
+![alt text](image-1.png)
+
 ## Setup Instructions
 ### Clone the repository:
 `git clone <repository-url>`
