@@ -23,6 +23,7 @@ def get_flyable_airports(current_airport, all_airports):
                     'latitude_deg': airport[2],
                     'longitude_deg': airport[3],
                     'continent': airport[4],
+                    'country': airport[5],
                     'cost_of_flight': cost_of_flight,
                     'co2_consumption': co2_consumption,
                     'flyable': True

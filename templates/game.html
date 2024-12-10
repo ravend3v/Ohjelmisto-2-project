@@ -17,7 +17,7 @@
     <div id="map" class="h-screen"></div>
     <div
       id="search"
-      class="bg-white z-[1000] absolute top-4 rounded-md w-[25%]"
+      class="bg-white z-[1000] absolute top-4 rounded-md flex flex-col w-[28%]"
     >
       <div class="relative">
         <i
@@ -25,11 +25,14 @@
           id="search-icon"
         ></i>
         <input
+          id="search-input"
           type="text"
-          placeholder="Search airports by ICOA-code, continent or country"
+          placeholder="Search airports by ICOA-code, name, continent (Code) or country"
           class="w-full px-10 py-2 rounded-md"
+          oninput="airportSearch()"
         />
       </div>
+      <div id="search-results" class="w-full rounded-b-md max-h-96 flex flex-col overflow-y-scroll"></div>
     </div>
 
     <div
@@ -42,7 +45,7 @@
       <button id="save-game" title="Save game" onclick="alert('Game saved')">
         <i class="fa-solid fa-cloud-arrow-up"></i>
       </button>
-      <button id="game-rules" title="Game rules" onclick="document.getElementById('rules').style.display='flex'">
+      <button id="game-rules" title="Game rules" onclick="document.getElementById('rules-box').style.display='flex'">
         <i class="fa-regular fa-clipboard"></i>
       </button>
     </div>
@@ -91,7 +94,7 @@ Peliss채 aloitus kaupunkeja on 3 ja niist채 voi valita yhden, n채m채 maat pysyv�
 Jokaisessa maan vaihtoehtoisista kaupungista on oma trivia kysymys kyseisest채 maasta tai kaunpungista. Oikea vastaus palkitsee pelaajan rahalla.
 Pelaaja voi ostaa lentolippuja ja lent채채 uusiin maihin, joista toiset ovat halvempia kuin toiset.
 Lyhyempi matka on kalliimpi kuin pidempi matka.</p>
-      <button onclick="document.getElementById('rules').style.display='none'" class="border-solid border-2 border-black rounded-md py-2 px-4 active:scale-95">Ok</button>
+      <button onclick="document.getElementById('rules-box').style.display='none'" class="border-solid border-2 border-black rounded-md py-2 px-4 active:scale-95">Ok</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -99,7 +102,50 @@ Lyhyempi matka on kalliimpi kuin pidempi matka.</p>
     <script type="text/javascript">
       const pageData = {{ data | tojson }}
 
-      renderMap(pageData.airports, pageData.current_airport, pageData.access_token_data, pageData.game_id)
+      if (pageData['game_over']) {
+        message = 'You have lost the game'
+        color = 'red-500'
+        if (pageData['game_status'] == 'WINNER') {
+          message = 'You have won the game'
+          color = 'green-500'
+        }
+
+        location.href = `/game_over?message=${message}&color=${color}`
+      }
+
+      const leafletMap = renderMap(pageData.airports, pageData.current_airport, pageData.access_token_data, pageData.game_id)
+
+      function airportSearch() {
+        const input = document.getElementById('search-input').value.toLowerCase()
+        const resultsDiv = document.getElementById('search-results')
+        resultsDiv.innerHTML = ''
+        if (input.trim() === '') {
+          resultsDiv.innerHTML = ''
+          return
+        }
+
+        const filteredAirports = pageData.airports.filter((airport) =>
+            airport.ident.toLowerCase().includes(input) ||
+            airport.name.toLowerCase().includes(input) ||
+            airport.continent.toLowerCase().includes(input) ||
+            airport.country.toLowerCase().includes(input)
+        )
+
+        if (filteredAirports.length > 0) {
+          filteredAirports.forEach((airport) => {
+            const resultItem = document.createElement('button')
+            resultItem.className = 'py-2 px-4 font-semibold flex justify-start hover:bg-slate-200'
+            resultItem.innerHTML = airport.name
+            resultItem.onclick = () => {
+              leafletMap.setView([airport['latitude_deg'], airport['longitude_deg']], 7)
+              resultsDiv.innerHTML = ''
+            }
+
+            resultsDiv.appendChild(resultItem)
+          })
+        }
+      }
+
     </script>
   </body>
 </html>

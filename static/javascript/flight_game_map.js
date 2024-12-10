@@ -144,7 +144,7 @@ function renderMap(airports, current_airport, access_token_data, game_id) {
                             document.getElementById('correct').style.display = 'flex'
                             const correctTitle = document.getElementById('correct-title')
                             correctTitle.style.color = correct ? 'green' : 'red'
-                            correctTitle.innerHTML = correct ? 'Correct' : 'Incorrect'
+                            correctTitle.innerHTML = correct ? `Correct you have won ${Math.round(winnings)}€` : `Incorrect you have lost ${cost_of_flight}€`
                         } else {
                             alert(updateLocationResponse['message'])
                         }
@@ -156,6 +156,8 @@ function renderMap(airports, current_airport, access_token_data, game_id) {
             }
         })
     }
+
+    return map
 }
 
 function shuffleArray(array) {
